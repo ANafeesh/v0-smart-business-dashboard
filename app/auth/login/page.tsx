@@ -53,36 +53,13 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // First try to sign in
+      // Sign in with pre-created demo account
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: DEMO_EMAIL,
         password: DEMO_PASSWORD,
       })
       
-      // If user doesn't exist, create the demo account
-      if (signInError?.message?.includes('Invalid login credentials')) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: DEMO_EMAIL,
-          password: DEMO_PASSWORD,
-          options: {
-            data: {
-              full_name: 'Demo User',
-            },
-          },
-        })
-        
-        if (signUpError) throw signUpError
-        
-        // Try signing in again after creating
-        const { error: retryError } = await supabase.auth.signInWithPassword({
-          email: DEMO_EMAIL,
-          password: DEMO_PASSWORD,
-        })
-        
-        if (retryError) throw retryError
-      } else if (signInError) {
-        throw signInError
-      }
+      if (signInError) throw signInError
       
       router.push('/dashboard')
       router.refresh()
