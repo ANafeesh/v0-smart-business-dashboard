@@ -11,10 +11,13 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Coffee } from 'lucide-react'
+import { Coffee, Sparkles } from 'lucide-react'
+
+// Demo credentials
+const DEMO_EMAIL = 'demo@smartbusiness.com'
+const DEMO_PASSWORD = 'demo123456'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -44,6 +47,52 @@ export default function LoginPage() {
     }
   }
 
+  const handleDemoLogin = async () => {
+    const supabase = createClient()
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      // First try to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      })
+      
+      // If user doesn't exist, create the demo account
+      if (signInError?.message?.includes('Invalid login credentials')) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: DEMO_EMAIL,
+          password: DEMO_PASSWORD,
+          options: {
+            data: {
+              full_name: 'Demo User',
+            },
+          },
+        })
+        
+        if (signUpError) throw signUpError
+        
+        // Try signing in again after creating
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email: DEMO_EMAIL,
+          password: DEMO_PASSWORD,
+        })
+        
+        if (retryError) throw retryError
+      } else if (signInError) {
+        throw signInError
+      }
+      
+      router.push('/dashboard')
+      router.refresh()
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background">
       <div className="w-full max-w-sm">
@@ -61,12 +110,34 @@ export default function LoginPage() {
 
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Welcome Back</CardTitle>
+              <CardTitle className="text-2xl">Welcome</CardTitle>
               <CardDescription>
                 Sign in to access your business dashboard
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {/* Demo Login Button */}
+              <Button 
+                type="button"
+                onClick={handleDemoLogin}
+                className="w-full gap-2"
+                disabled={isLoading}
+              >
+                <Sparkles className="h-4 w-4" />
+                {isLoading ? 'Signing in...' : 'Enter with Demo Account'}
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or use your credentials
+                  </span>
+                </div>
+              </div>
+
               <form onSubmit={handleLogin}>
                 <div className="flex flex-col gap-4">
                   <div className="space-y-2">
@@ -95,26 +166,19 @@ export default function LoginPage() {
                       {error}
                     </p>
                   )}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" variant="outline" className="w-full" disabled={isLoading}>
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
-                </div>
-                <div className="mt-6 text-center text-sm">
-                  Don&apos;t have an account?{' '}
-                  <Link
-                    href="/auth/sign-up"
-                    className="text-primary font-medium hover:underline underline-offset-4"
-                  >
-                    Create one
-                  </Link>
                 </div>
               </form>
             </CardContent>
           </Card>
 
-          <p className="text-center text-xs text-muted-foreground">
-            By signing in, you agree to our Terms of Service and Privacy Policy
-          </p>
+          <div className="text-center text-xs text-muted-foreground space-y-1">
+            <p className="font-medium">Demo Credentials:</p>
+            <p>Email: {DEMO_EMAIL}</p>
+            <p>Password: {DEMO_PASSWORD}</p>
+          </div>
         </div>
       </div>
     </div>
