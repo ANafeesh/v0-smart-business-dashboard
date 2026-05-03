@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -38,6 +38,11 @@ export function DashboardSidebar() {
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -99,10 +104,14 @@ export function DashboardSidebar() {
             collapsed && "justify-center px-0"
           )}
         >
-          {theme === "dark" ? (
-            <Sun className="h-5 w-5 shrink-0" />
+          {mounted ? (
+            theme === "dark" ? (
+              <Sun className="h-5 w-5 shrink-0" />
+            ) : (
+              <Moon className="h-5 w-5 shrink-0" />
+            )
           ) : (
-            <Moon className="h-5 w-5 shrink-0" />
+            <div className="h-5 w-5 shrink-0" />
           )}
           {!collapsed && <span>Toggle Theme</span>}
         </Button>
